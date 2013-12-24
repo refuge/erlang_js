@@ -129,7 +129,7 @@ define_js(Ctx, FileName, Js, Timeout) when is_binary(FileName),
                                            is_binary(Js) ->
     case call_driver(Ctx, "dj", [FileName, Js], Timeout) of
         {error, ErrorJson} when is_binary(ErrorJson) ->
-            {struct, [{<<"error">>, {struct, Error}}]} = js_mochijson2:decode(ErrorJson),
+            {[{<<"error">>, {Error}}]} = js_json:decode(ErrorJson),
             {error, Error};
         {error, Error} ->
             {error, Error};
@@ -149,10 +149,10 @@ eval_js(Ctx, {file, FileName}, Timeout) ->
 eval_js(Ctx, Js, Timeout) when is_binary(Js) ->
     case call_driver(Ctx, "ej", [<<"<unnamed>">>, jsonify(Js)], Timeout) of
         {ok, Result} ->
-            {ok, js_mochijson2:decode(Result)};
+            {ok, js_json:decode(Result)};
         {error, ErrorJson} when is_binary(ErrorJson) ->
-            case js_mochijson2:decode(ErrorJson) of
-                {struct, [{<<"error">>, {struct, Error}}]} ->
+            case js_json:decode(ErrorJson) of
+                {[{<<"error">>, {Error}}]} ->
                     {error, Error};
                 _ ->
                     {error, ErrorJson}
@@ -161,7 +161,11 @@ eval_js(Ctx, Js, Timeout) when is_binary(Js) ->
             {error, Error}
     end.
 
+
 %% Internal functions
+%% @private
+
+
 %% @private
 jsonify(Code) when is_binary(Code) ->
     {Body, <<LastChar:8>>} = split_binary(Code, size(Code) - 1),
